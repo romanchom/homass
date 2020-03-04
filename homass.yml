@@ -1,0 +1,123 @@
+  - hosts: all  
+    tasks:
+      # - name: Install python docker module
+      #   become: true
+      #   pip:
+      #       name: docker
+      # - name: Create docker network
+      #   docker_network:
+      #       name: "{{ docker_network_name }}"
+      
+
+      # - name: Create mqtt broker
+      #   docker_container:
+      #       name: "{{ mqtt_name }}"
+      #       image: eclipse-mosquitto
+      #       restart_policy: unless-stopped
+      #       ports:
+      #           - "1883:1883/tcp"
+      #       networks_cli_compatible: yes
+      #       networks:
+      #           - name: "{{ docker_network_name }}"
+
+
+      - name: Create home-assistant volume
+        docker_volume:
+            name: home-assistant
+        register: volume_properties
+      - name: Configure home-assistant
+        become: true
+        template:
+            src: "config/{{ item }}"
+            dest: "{{ volume_properties.ansible_facts.docker_volume.Mountpoint }}/{{ item }}"
+        with_items:
+          - configuration.yaml
+          - customize.yaml
+          - groups.yaml
+          - automations.yaml
+          - scripts.yaml
+          - scenes.yaml
+      - name: Create home-assistant container
+        docker_container:
+            name: "{{ home_assistant_name }}"
+            image: homeassistant/home-assistant
+            restart: yes
+            restart_policy: unless-stopped
+            volumes:
+              - "/etc/localtime:/etc/localtime:ro"
+              - "/etc/timezone:/etc/timezone:ro"
+              - "home-assistant:/config"
+            networks_cli_compatible: yes
+            networks:
+              - name: "{{ docker_network_name }}"
+      
+
+      # - name: Create pihole volume
+      #   docker_volume:
+      #       name: pihole
+      #   register: volume_properties
+      # - name: Configure pihole
+      #   become: true
+      #   template:
+      #       src: "config/lan.list"
+      #       dest: "{{ volume_properties.ansible_facts.docker_volume.Mountpoint }}/lan.list"
+      # - name: Copy adlists
+      #   become: true
+      #   copy:
+      #       src: config/adlists.list
+      #       dest: "{{ volume_properties.ansible_facts.docker_volume.Mountpoint }}/"
+
+
+      # - name: Create pihole-dnsmasq volume
+      #   docker_volume:
+      #       name: pihole-dnsmasq
+      #   register: volume_properties
+      # - name: Configure pihole
+      #   become: true
+      #   copy:
+      #       src: "config/02-lan.conf"
+      #       dest: "{{ volume_properties.ansible_facts.docker_volume.Mountpoint }}/02-lan.conf"
+
+
+      # - name: Create pihole container
+      #   docker_container:
+      #       name: "{{ pihole_name }}"
+      #       image: "{{ pihole_image }}"
+      #       restart: yes
+      #       restart_policy: unless-stopped
+      #       volumes:
+      #         - "pihole:/etc/pihole/"
+      #         - "pihole-dnsmasq:/etc/dnsmasq.d/"
+      #       networks_cli_compatible: yes
+      #       networks:
+      #         - name: "{{ docker_network_name }}"
+      #       ports:
+      #         - "53:53/tcp"
+      #         - "53:53/udp"
+      #       env:
+      #           ServerIP: "{{ server_ip }}"
+      #       dns_servers: 8.8.8.8
+
+
+      # - name: Create proxy volume
+      #   docker_volume:
+      #       name: "{{ proxy_name }}"
+      #   register: volume_properties
+      # - name: Configure proxy
+      #   become: true
+      #   template:
+      #       src: "config/nginx.conf"
+      #       dest: "{{ volume_properties.ansible_facts.docker_volume.Mountpoint }}/nginx.conf"
+      # - name: Create proxy container
+      #   docker_container:
+      #       name: proxy
+      #       image: nginx:stable-alpine
+      #       restart: yes
+      #       restart_policy: unless-stopped
+      #       volumes:
+      #         - "proxy:/etc/nginx/"
+      #       networks_cli_compatible: yes
+      #       networks:
+      #           - name: "{{ docker_network_name }}"
+      #       ports:
+      #           - "80:80/tcp"

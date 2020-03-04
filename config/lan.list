@@ -1,0 +1,3 @@
+{{ server_ip }} {{ home_assistant_address }} {{ home_assistant_name }}
+{{ server_ip }} {{ pihole_address }} {{ pihole_name }}
+{{ server_ip }} {{ mqtt_address }} {{ mqtt_name }}
